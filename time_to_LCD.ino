@@ -41,6 +41,12 @@ int pin_cols[nCols] = {C1, C2, C3, C4};
 int buttonPriorValue = 1;
 int buttonValue = 0;
 
+//define alarm toggle variable
+int alarmEN = 0;
+
+//define alarm to 00:00 to start
+String alarm_time = "00:00";
+
 char keypadListen(){
   char keyValue = 0;
  //scan columns 1 by 1 
@@ -108,11 +114,8 @@ void setup() {
   //setup serial monitor
   Serial.begin(9600);
 
-  //set up RTC
+  //setup RTC
   URTCLIB_WIRE.begin();
-  //set time to midnight
-  rtc.set(0, 0, 0, 0, 0, 0, 0); //(second, minute, hour, dayOfWeek, dayOfMonth, month, year)
-
 }
 
 //this function gets the time from the RTC, displays it to the LCD, and returns a time string to be compared with the alarm string
@@ -128,8 +131,8 @@ String get_time(){
   //store time to be compared for alarm
   String time = "";
   
-  //set cursor to 0, 0
-  lcd.setCursor(0, 0);
+  //set cursor to 4, 0
+  lcd.setCursor(4, 0);
 
   //make hh format
   if (hours < 10){
@@ -272,30 +275,59 @@ String set_alarm(){
   return alarm_time;
 }
 
+void disp_alarm(String alarm, int state){
+  lcd.setCursor(0,1);
+
+  lcd.print("A: ");
+  lcd.print(alarm);
+
+  if (state == 1){
+    lcd.setCursor(12, 1);
+    lcd.print(" ON");
+  }
+
+  if (state == 0){
+    lcd.setCursor(12, 1);
+    lcd.print("OFF");
+  }
+}
+
+int toggle_alarm(){
+  //toggle the alarm and return
+  alarmEN = !alarmEN;
+  return alarmEN;
+
+}
+
 void loop() {
   // put your main code here, to run repeatedly:
-  while(x){
+  //read keypad press
+  char key = keypadListen();
+  Serial.println(key);
+
+  //set the time if D is pressed
+  if (key == 'D'){
     set_time();
-    x = false;
   }
-  
-  String current_time = get_time(); 
-  Serial.print("Time: ");
-  Serial.println(current_time);
 
-  String alarm_time;
-  while (y){
+  //set the alarm if A is pressed 
+  if (key == 'A'){
     alarm_time = set_alarm();
-    y = false;
   }
-  Serial.print("Alarm: ");
-  Serial.println(alarm_time);
 
+  //toggle alarm if B is pressed
+  int alarm_state;
+  if (key == 'B'){
+    alarm_state = toggle_alarm();
+  }
 
+  //display current time
+  String current_time = get_time(); 
+  //display alarm time
+  disp_alarm(alarm_time, alarm_state);
 
-
-
-
-
+  if (current_time == alarm_time && alarm_state == 1){
+    Serial.println("ALARM");
+  }
 
 }
