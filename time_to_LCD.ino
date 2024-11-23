@@ -1,8 +1,6 @@
 #include <LiquidCrystal_I2C.h>
 #include "uRTCLib.h"
 
-bool x = true;
-bool y = true;
 //set up LCD screen
 LiquidCrystal_I2C lcd(0x27,16,2);
 
@@ -10,20 +8,23 @@ LiquidCrystal_I2C lcd(0x27,16,2);
 uRTCLib rtc(0x68);
 
 //define column pins
-int C1 = 5;
-int C2 = 4;
-int C3 = 3;
-int C4 = 2;
+int C1 = 6;
+int C2 = 7;
+int C3 = 8;
+int C4 = 9;
 
 //define row pins
-int R1 = 6;
-int R2 = 7;
-int R3 = 8;
-int R4 = 9;
+int R1 = 2;
+int R2 = 3;
+int R3 = 4;
+int R4 = 5;
 
 //define keymap
 const int nRows = 4;
 const int nCols = 4;
+
+//buzzer pin
+int buzzer = 11;
 
 char Keymap[nRows][nCols] = {
   {'A', 'B', 'C', 'D'},
@@ -92,7 +93,7 @@ int debounce(int PIN, int last_val){
 
 
 void setup() {
-  delay(3000);
+  delay(1000);
   // put your setup code here, to run once:
   //setup for LCD
   lcd.init();
@@ -110,6 +111,9 @@ void setup() {
   pinMode(R2, INPUT_PULLUP);
   pinMode(R3, INPUT_PULLUP);
   pinMode(R4, INPUT_PULLUP);
+
+  //set buzzer as output
+  pinMode(buzzer, OUTPUT);
 
   //setup serial monitor
   Serial.begin(9600);
@@ -190,6 +194,15 @@ void set_time(){
     }
   }
   
+  // Ensure valid range for hours
+  if (h < 0 || h > 23) {
+    lcd.clear();
+    lcd.print("Invalid Hours!");
+    delay(1500);
+    lcd.clear();
+    return; // Exit if invalid input
+  }
+
   //set mins
   lcd.setCursor(0, 1);
   lcd.print("Mins: "); //prompt user for mins
@@ -211,7 +224,15 @@ void set_time(){
       i--; // If invalid key, repeat the step
     }
   }
-
+  
+  // Ensure valid range for hours
+  if (m < 0 || m > 59) {
+    lcd.clear();
+    lcd.print("Invalid Mins!");
+    delay(1500);
+    lcd.clear();
+    return; // Exit if invalid input
+  }
   //set secs to 00
   int s = 0;
   
@@ -221,14 +242,14 @@ void set_time(){
 }
 
 //this function sets the alarm from user inputs to the keypad and retuens an alarm string
-String set_alarm(){
-  //set hours
+String set_alarm() {
+  // Initialize the LCD display
   lcd.clear();
   lcd.setCursor(0, 0);
-  lcd.print("A Hours: "); //prompt user for hrs
+  lcd.print("A Hours: "); // Prompt user for hours
 
-  int A_h = 0; //variable to store hh
-  //get two char from user
+  int A_h = 0; // Variable to store hours
+  // Get two characters for hours
   for (int i = 0; i < 2; i++) {
     char key = 0;
 
@@ -239,18 +260,25 @@ String set_alarm(){
     if (key >= '0' && key <= '9') {
       lcd.print(key); // Display the digit on the LCD
       A_h = A_h * 10 + (key - '0'); // Accumulate the number
-    } 
-    else {
+    } else {
       i--; // If invalid key, repeat the step
     }
   }
-  
-  //set mins
-  lcd.setCursor(0, 1);
-  lcd.print("A Mins: "); //prompt user for mins
 
-  int A_m = 0; //variable to store mm
-  //get two char from user
+  // Ensure valid range for hours
+  if (A_h < 0 || A_h > 23) {
+    lcd.clear();
+    lcd.print("Invalid Hours!");
+    delay(1500);
+    lcd.clear();
+    return "00:00"; // Exit if invalid input
+  }
+
+  lcd.setCursor(0,1);
+  lcd.print("A Mins: "); // Prompt user for minutes
+
+  int A_m = 0; // Variable to store minutes
+  // Get two characters for minutes
   for (int i = 0; i < 2; i++) {
     char key = 0;
 
@@ -261,19 +289,29 @@ String set_alarm(){
     if (key >= '0' && key <= '9') {
       lcd.print(key); // Display the digit on the LCD
       A_m = A_m * 10 + (key - '0'); // Accumulate the number
-    } 
-    else {
+    } else {
       i--; // If invalid key, repeat the step
     }
   }
-  //create alarm string
-  String alarm_time = String(A_h) + ":" + String(A_m);
 
-  lcd.clear(); //clear LCD
-  
-  //return alarm string 
-  return alarm_time;
+  // Ensure valid range for minutes
+  if (A_m < 0 || A_m > 59) {
+    lcd.clear();
+    lcd.print("Invalid Mins!");
+    delay(1500);
+    lcd.clear();
+    return "00:00"; // Exit if invalid input
+  }
+
+  // Format and return the alarm time
+  char alarmTime[6];
+  sprintf(alarmTime, "%02d:%02d", A_h, A_m); // Ensure two-digit formatting
+  delay(100);
+
+  lcd.clear();
+  return String(alarmTime);
 }
+
 
 void disp_alarm(String alarm, int state){
   lcd.setCursor(0,1);
@@ -327,7 +365,10 @@ void loop() {
   disp_alarm(alarm_time, alarm_state);
 
   if (current_time == alarm_time && alarm_state == 1){
-    Serial.println("ALARM");
+    digitalWrite(buzzer, HIGH);
+    delay(750);
+    digitalWrite(buzzer, LOW);
   }
 
+  
 }
