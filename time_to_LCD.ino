@@ -24,7 +24,7 @@ const int nRows = 4;
 const int nCols = 4;
 
 //buzzer pin
-int buzzer = 11;
+int buzzer_pin = 11;
 
 char Keymap[nRows][nCols] = {
   {'A', 'B', 'C', 'D'},
@@ -312,6 +312,12 @@ String set_alarm() {
   return String(alarmTime);
 }
 
+void buzzer() {
+  digitalWrite(buzzer_pin, HIGH);
+  delay(500);
+  digitalWrite(buzzer_pin, LOW);
+  delay(250);
+}
 
 void disp_alarm(String alarm, int state){
   lcd.setCursor(0,1);
@@ -364,10 +370,8 @@ void loop() {
   //display alarm time
   disp_alarm(alarm_time, alarm_state);
 
-  if (current_time == alarm_time && alarm_state == 1){
-    digitalWrite(buzzer, HIGH);
-    delay(750);
-    digitalWrite(buzzer, LOW);
+  if (current_time == alarm_time && alarm_state == 1 ){
+    buzzer();
   }
 
   
