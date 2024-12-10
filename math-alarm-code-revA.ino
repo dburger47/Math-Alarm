@@ -1,3 +1,4 @@
+//libraries to control the LCD and RTC
 #include <LiquidCrystal_I2C.h>
 #include "uRTCLib.h"
 
@@ -7,25 +8,26 @@ LiquidCrystal_I2C lcd(0x27,16,2);
 // uRTCLib rtc;
 uRTCLib rtc(0x68);
 
-//define column pins
+//define column pins for keypad
 int C1 = 6;
 int C2 = 7;
 int C3 = 8;
 int C4 = 9;
 
-//define row pins
+//define row pins for keypad
 int R1 = 2;
 int R2 = 3;
 int R3 = 4;
 int R4 = 5;
 
-//define keymap
+//these values are used in the keypadListen function in the for loops
 const int nRows = 4;
 const int nCols = 4;
 
 //buzzer pin
 int buzzer_pin = 11;
 
+//define keymap for keypad
 char Keymap[nRows][nCols] = {
   {'A', 'B', 'C', 'D'},
   {'3', '6', '9', '#'},
@@ -48,17 +50,20 @@ int alarmEN = 0;
 //define alarm to 00:00 to start
 String alarm_time = "00:00";
 
+//this function returns the char that is pressed on the keypad
 char keypadListen(){
+  //define inital keyvalue
   char keyValue = 0;
+
  //scan columns 1 by 1 
   digitalWrite(C1, HIGH);
   digitalWrite(C2, HIGH);
   digitalWrite(C3, HIGH);
   digitalWrite(C4, HIGH);
 
+  //set each column low 1 by 1
   for(int col = 0; col < nCols; col++){
     digitalWrite(pin_cols[col], LOW);
-    
   
     //scan rows to see if key is pressed
     for(int row = 0; row < nRows; row++){
@@ -68,6 +73,7 @@ char keypadListen(){
         if(buttonValue != buttonPriorValue){
           buttonPriorValue = buttonValue;
         }
+        //map button press to keymap
         keyValue = Keymap[row][col];
         delay(100);
       }
@@ -77,6 +83,7 @@ char keypadListen(){
     digitalWrite(pin_cols[col], HIGH);
     
   }  
+  //return button that was pressed
   return keyValue;
 }
 
@@ -90,6 +97,7 @@ int debounce(int PIN, int last_val){
   }
   return new_val;
 }
+
 
 // This function will create a math problem, consisting of a solution and two expressions.
 // The user will need to select the correct expression that matches the given solution.
@@ -249,7 +257,7 @@ void setup() {
   pinMode(R4, INPUT_PULLUP);
 
   //set buzzer as output
-  pinMode(buzzer, OUTPUT);
+  pinMode(buzzer_pin, OUTPUT);
 
   //setup serial monitor
   Serial.begin(9600);
@@ -455,23 +463,12 @@ String set_alarm() {
 //   delay(250);
 // }
 
-void buzzer() {
-  static unsigned long previousMillis = 0; // Tracks the last time the buzzer changed state
-  static bool buzzerState = LOW;           // Tracks the current state of the buzzer
-  const unsigned long onTime = 500;        // Buzzer ON duration in milliseconds
-  const unsigned long offTime = 250;       // Buzzer OFF duration in milliseconds
-  
-  unsigned long currentMillis = millis();  // Get the current time
+void buzzer_ON() {
+  digitalWrite(buzzer_pin, HIGH);
+}
 
-  // Determine the interval based on the current state of the buzzer
-  unsigned long interval = (buzzerState == HIGH) ? onTime : offTime;
-
-  // Check if the interval has elapsed
-  if (currentMillis - previousMillis >= interval) {
-    previousMillis = currentMillis;        // Update the time
-    buzzerState = !buzzerState;            // Toggle the buzzer state
-    digitalWrite(buzzer_pin, buzzerState); // Set the buzzer state
-  }
+void buzzer_OFF() {
+  digitalWrite(buzzer_pin, LOW);
 }
 
 
@@ -535,12 +532,13 @@ void loop() {
 
     while (correctFlag == 0) {
       Serial.println("In here!");
-      buzzer();
+      buzzer_ON();
     
       correctFlag = mathProblem();
     }
 
     alarmExit = 1;
+    buzzer_OFF();
     lcd.clear();
   }
 
