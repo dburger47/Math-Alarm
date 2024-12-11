@@ -55,7 +55,7 @@ char keypadListen(){
   //define inital keyvalue
   char keyValue = 0;
 
- //scan columns 1 by 1 
+ //set all columns high 
   digitalWrite(C1, HIGH);
   digitalWrite(C2, HIGH);
   digitalWrite(C3, HIGH);
@@ -112,13 +112,7 @@ bool mathProblem() {
 
   // create array of random operands
   for (int i = 0; i < numOperands; i++) {
-    operands[i] = random(1, 10); 
-
-    // roll for + or -
-    if (random(0, 2) == 0) {
-      operands[i] *= -1;
-    }
-
+    operands[i] = random(1, 10) * (random(0, 2) == 0 ? -1 : 1);
   }
 
   // solve the created problem
@@ -127,7 +121,7 @@ bool mathProblem() {
     solution += operands[i];
   }
 
-  // create strong of correct expression
+  // create string of correct expression
   String correctString = "";
   for (int i = 0; i < numOperands; i++) {
     if (operands[i] > 0) {
@@ -171,7 +165,7 @@ bool mathProblem() {
   // next, roll random(0,2) for correct expression's cursor row
   int cursorRowCorrect = random(0,2);
 
-    // set wrong expression to opposite of rolled
+  // set wrong expression to opposite of rolled
   int cursorRowWrong = 1 - cursorRowCorrect;
     
   char ansRow;
@@ -221,9 +215,6 @@ bool mathProblem() {
   }
 
   bool correct = 0;
-
-  Serial.print("Key: ");
-  Serial.println(keyAns);
   
   // check for correct answer
   if (keyAns == ansRow) {
@@ -531,7 +522,6 @@ void loop() {
     bool correctFlag = 0;
 
     while (correctFlag == 0) {
-      Serial.println("In here!");
       buzzer_ON();
     
       correctFlag = mathProblem();
