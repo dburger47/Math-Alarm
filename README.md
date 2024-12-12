@@ -14,5 +14,7 @@ A: 5 + 8 - 7
 B: 10 - 8 + 3
 
 To reset the current time, press the "D" key and enter the time in hours and mins.
+
 To set the alarm time, press the "A" button and enter the time hours and mins.
+
 To toggle on and off the alarm, press the "B" button.
